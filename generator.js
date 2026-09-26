@@ -443,21 +443,47 @@ function updateTickLenght() {
 function crateNotes() {
     let text = document.getElementById('input-text').value.toUpperCase();
     songNotes = [];
+    
+    let currentScale = scaleKeys[generatorScale];
+    
     for (var i = 0; i < text.length; i++) {
         let char = text.charAt(i);
         let charIndex = morseChars.indexOf(char);
-        if(charIndex != -1) {
-            let charKey = char.charCodeAt(0)%scaleKeys[generatorScale].length;
+        
+        if (charIndex != -1) {
             let morse = morseCharsEncode[charIndex];
+            
             for (var j = 0; j < morse.length; j++) {
                 for (var repeat = 0; repeat < generatorRepeatPattern; repeat++) {
-                    if(morse.charAt(j) == '.') {
-                        songNotes.push(scaleKeys[generatorScale][charKey]);
-                    }else {
-                        songNotes.push(scaleKeys[generatorScale][charKey]);
-                        songNotes.push(scaleKeys[generatorScale][charKey]);
+                    
+                    // Caos controlado: escolhe aleatoriamente notas da escala ou saltos amplos
+                    let randomScaleIndex = Math.floor(Math.random() * currentScale.length);
+                    let noteValue = currentScale[randomScaleIndex];
+                    
+                    // Adiciona variação de oitava ou deslocamento caótico ocasional
+                    if (Math.random() > 0.7) {
+                        noteValue += (Math.random() > 0.5 ? 12 : -12); // Sobe ou desce uma oitava
                     }
-                    songNotes.push(generatorFillGaps ? (generatorFillGapsKey-0) : null);
+                    
+                    // Se for ponto (.), nota curta; se for traço (-), nota longa/duplicada com variação
+                    if (morse.charAt(j) == '.') {
+                        songNotes.push(noteValue);
+                    } else {
+                        // Traço cria um acorde rápido ou notas duplas em cascata
+                        songNotes.push(noteValue);
+                        songNotes.push(noteValue + (Math.random() > 0.5 ? 3 : 4)); // Adiciona tensão harmônica
+                    }
+                    
+                    // Preenchimento de lacunas dinâmico (com chance de silêncio ou nota fantasma)
+                    if (generatorFillGaps) {
+                        let fillNote = (Math.random() > 0.4) ? null : (generatorFillGapsKey - 0);
+                        songNotes.push(fillNote);
+                    } else {
+                        // Silêncio aleatório para quebrar o ritmo linear
+                        if (Math.random() > 0.85) {
+                            songNotes.push(null);
+                        }
+                    }
                 }
             }
         }
